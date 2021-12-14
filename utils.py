@@ -293,7 +293,8 @@ def calc_metric(p, task, all_lc_preds, all_ttlc_preds, all_att_coef, all_labels,
     prediction_seq = p.SEQ_LEN-p.IN_SEQ_LEN+1
     all_preds = np.argmax(all_lc_preds, axis =-1)
     
-    plot_att_graphs(p, all_att_coef, prediction_seq, all_labels, all_preds, figure_name)
+    if eval_type == 'Test':
+        plot_att_graphs(p, all_att_coef, prediction_seq, all_labels, all_preds, figure_name)
     if task == params.CLASSIFICATION or task == params.DUAL:
         auc, max_j = calc_roc_n_prc(p, all_lc_preds, all_labels, all_ttlc_preds, prediction_seq, num_samples, figure_name, thr_type = 'thr', eval_type = eval_type)
         accuracy, precision, recall, f1, FPR, all_TPs = calc_classification_metrics(p, all_preds, all_labels, all_ttlc_preds, prediction_seq, num_samples, eval_type, figure_name)

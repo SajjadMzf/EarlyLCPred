@@ -258,9 +258,9 @@ class RenderScenarios:
 
         lateral_pos = lambda itr, lane_ind: abs(frame_data[rc.Y][itr] + frame_data[rc.HEIGHT][itr]/2- tv_lane_markings[lane_ind])
 
-        rel_distance_x = lambda itr: fix_sign(frame_data[rc.X][itr] - frame_data[rc.X][tv_itr])
+        rel_distance_x = lambda itr: abs(frame_data[rc.X][itr] - frame_data[rc.X][tv_itr])
 
-        rel_distance_y = lambda itr: fix_sign(frame_data[rc.Y][itr] - frame_data[rc.Y][tv_itr])
+        rel_distance_y = lambda itr: abs(frame_data[rc.Y][itr] - frame_data[rc.Y][tv_itr])
         
         rel_velo_x = lambda itr: fix_sign(frame_data[rc.X_VELOCITY][itr] - frame_data[rc.X_VELOCITY][tv_itr]) #transform from [-1,1] to [0,1]
         rel_velo_y =lambda itr: fix_sign(frame_data[rc.Y_VELOCITY][itr] - frame_data[rc.Y_VELOCITY][tv_itr])
@@ -293,17 +293,17 @@ class RenderScenarios:
         
 
         # long dist to pv
-        state[3] = rel_distance_x(pv_itr) if pv_itr != None else 100 
+        state[3] = rel_distance_x(pv_itr) if pv_itr != None else 400 
         # long dist to rpv
-        state[4] = rel_distance_x(rpv_itr) if rpv_itr != None else 100 
+        state[4] = rel_distance_x(rpv_itr) if rpv_itr != None else 400 
         # long dist to fv
-        state[5] = rel_distance_x(fv_itr) if fv_itr != None else -100 
+        state[5] = rel_distance_x(fv_itr) if fv_itr != None else 400 
         # lat dist to left marking
         state[6] = lateral_pos(tv_itr, tv_left_lane_ind)
          # lat dist to right vehicle
-        state[7] = rel_distance_y(rv_itr) if rv_itr != None else -2*lane_width
+        state[7] = rel_distance_y(rv_itr) if rv_itr != None else 3*lane_width
         # lat dist to rfv
-        state[8] =rel_distance_y(rfv_itr) if rfv_itr != None else -2*lane_width
+        state[8] =rel_distance_y(rfv_itr) if rfv_itr != None else 3*lane_width
         # rel long vel pv
         state[9] = rel_velo_x(pv_itr) if pv_itr != None else 0
         # rel long vel fv

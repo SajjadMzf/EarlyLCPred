@@ -57,10 +57,10 @@ def train_model_dict(model_dict, p):
     #exit()
     val_dataset = Dataset.LCDataset(p.TRAIN_DATASET_DIR, p.VAL_DATA_FILES,  data_type = model_dict['data type'], keep_plot_info= False, states_min = tr_dataset.states_min, states_max = tr_dataset.states_max)
     te_dataset = Dataset.LCDataset(p.TEST_DATASET_DIR, p.TE_DATA_FILES,  data_type = model_dict['data type'], keep_plot_info= True, states_min = tr_dataset.states_min, states_max = tr_dataset.states_max)
-    print(tr_dataset.__len__())
-    print(val_dataset.__len__())
-    print(te_dataset.__len__())
-    exit()
+    #print(tr_dataset.__len__())
+    #print(val_dataset.__len__())
+    #print(te_dataset.__len__())
+    #exit()
     # Train/Evaluate:
     val_result_dic = utils.train_top_func(p, model, optimizer, lc_loss_func, ttlc_loss_func, task, curriculum, tr_dataset, val_dataset,device, model_tag = model_dict['tag'])    
     te_result_dic = utils.eval_top_func(p, model, lc_loss_func, ttlc_loss_func, task, te_dataset, device, model_tag = model_dict['tag'])
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     #1
     model_dict = m.MODELS[p.SELECTED_MODEL]
 
-    model_dict['hyperparams']['task'] = params.DUAL
+    model_dict['hyperparams']['task'] = params.CLASSIFICATION
     model_dict['hyperparams']['curriculum loss'] = False
     model_dict['hyperparams']['curriculum seq'] = False
     model_dict['hyperparams']['curriculum virtual'] = False
