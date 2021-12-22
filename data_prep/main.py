@@ -54,12 +54,12 @@ if __name__ =="__main__":
     
     np.random.seed(0)   
     # Single Core (For Debugging purposes)
-    
+    '''
     i = np.array([26])
     extract(1, i)    
     render(1, i)
     exit()
-    
+    '''
 
     # Extract LC scenarios (multi-threads)
     total_cores = 3

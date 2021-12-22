@@ -6,7 +6,7 @@ import read_csv as rc
 import param as p
 
 class ExtractScenarios:
-    """This class is for extracting LC and LK scenarios from HighD dataset recording files (needs to be called seperately for each recording).
+    """This class is for extracting LC and LK scenarios from HighD dataset recording files (needs to be instantiated seperately for each recording).
     """
     def __init__(
         self, 
@@ -27,14 +27,12 @@ class ExtractScenarios:
         self.track_path = track_path
 
         self.file_num = file_num
-        if p.UNBALANCED:
-            self.LC_states_dir = "../../Dataset/"+ dataset_name +"/NOEV_StatesU"
-        else:    
-            self.LC_states_dir = "../../Dataset/"+ dataset_name +"/NOEV_States"
+        
+        
+        self.LC_states_dir = "../../Dataset/"+ dataset_name +"/Scenarios"+ p.dir_ext
         if not os.path.exists(self.LC_states_dir):
             os.makedirs(self.LC_states_dir)
         self.scenarios = []
-        self.lane6_counter = 0
         self.data_tracks, _ = rc.read_track_csv(track_path, track_pickle_path, group_by = 'tracks', reload = False, fr_div = self.fr_div)
         self.data_frames, _ = rc.read_track_csv(track_path, frame_pickle_path, group_by = 'frames', reload = False, fr_div = self.fr_div)
         
@@ -46,11 +44,13 @@ class ExtractScenarios:
         lc_scenarios, lk_count, rlc_count, llc_count = self.get_lc_scenarios()
         self.scenarios.extend(lc_scenarios)
         lk_scenarios, total_lk, lk_with_ttlc = self.get_lk_scenarios(lk_count)
-        if p.UNBALANCED == False:
+        
+        if p.UNBALANCED == False: # Check if there are enough LK scenarios for a balanced dataset
             assert(lk_count ==len(lk_scenarios))
+        
         self.scenarios.extend(lk_scenarios)
         file_dir = os.path.join(self.LC_states_dir, str(self.file_num).zfill(2)+ '.pickle')
-        print("File Number; {}, ALL extracted samples: {}, RLC: {}, LLC: {}, Required LK: {}, ALL LK: {}, LK with TTLC:{}".format(self.file_num,rlc_count + llc_count +lk_count, rlc_count, llc_count, lk_count, total_lk, lk_with_ttlc))
+        print("File Number; {}, ALL extracted samples: {}, RLC: {}, LLC: {}, Balance LK: {}, ALL LK: {}, LK with TTLC:{}".format(self.file_num,rlc_count + llc_count +lk_count, rlc_count, llc_count, lk_count, total_lk, lk_with_ttlc))
         with open(file_dir, 'wb') as handle:
             pickle.dump(self.scenarios, handle, protocol= pickle.HIGHEST_PROTOCOL)
         

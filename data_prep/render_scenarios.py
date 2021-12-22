@@ -46,22 +46,15 @@ class RenderScenarios:
         # 1.3 Others
         self.mid_barrier = False
         
-        if p.UNBALANCED:
-            dir_ext = 'U'
-        else:
-            dir_ext = ''
-       
-        self.LC_whole_imgs_rdir = "../../Dataset/" + dataset_name + "/NOEV_WholeImages" + dir_ext
-        self.LC_cropped_imgs_rdir = "../../Dataset/" + dataset_name + "/NOEV_CroppedImages" + dir_ext
+        self.LC_whole_imgs_rdir = "../../Dataset/" + dataset_name + "/WholeImages" + p.dir_ext
+        self.LC_cropped_imgs_rdir = "../../Dataset/" + dataset_name + "/CroppedImages" + p.dir_ext
         
-        self.LC_full_states_rdir = "../../Dataset/" + dataset_name + "/NOEV_FullStates" + dir_ext
-        self.LC_states_dir = "../../Dataset/" + dataset_name + "/NOEV_States" + dir_ext 
-        self.LC_states_dataset_rdir = "../../Dataset/" + dataset_name + "/NOEV_StateDataset" + dir_ext
-        self.LC_image_dataset_rdir = "../../Dataset/" + dataset_name + "/NOEV_ImageDataset" + dir_ext
+        self.LC_states_dir = "../../Dataset/" + dataset_name + "/Scenarios" + p.dir_ext 
+        self.LC_image_dataset_rdir = "../../Dataset/" + dataset_name + "/RenderedDataset" + p.dir_ext
          
         self.frames_data, image_width = rc.read_track_csv(track_path, pickle_path, group_by = 'frames', fr_div = self.fr_div)
         self.statics = rc.read_static_info(static_path)
-        self.orig_image_width = image_width
+        
         self.image_width = int(image_width * self.image_scaleW)
         self.image_height = int((self.metas[rc.LOWER_LANE_MARKINGS][-1])*self.image_scaleH + self.highway_top_margin + self.highway_bottom_margin)
         self.update_dirs()
@@ -70,11 +63,6 @@ class RenderScenarios:
         file_dir = os.path.join(self.LC_states_dir, str(self.file_num).zfill(2) + '.pickle')
         with open(file_dir, 'rb') as handle:
             self.scenarios = pickle.load(handle)
-    
-    def save_full_scenarios_dict(self):
-        file_dir = os.path.join(self.LC_full_states_dir, str(self.file_num).zfill(2) + '.pickle')
-        with open(file_dir, 'wb') as handle:
-            pickle.dump(self.scenarios, handle, protocol= pickle.HIGHEST_PROTOCOL)
     
     def save_dataset(self):
         file_dir = os.path.join(self.LC_image_dataset_dir, str(self.file_num).zfill(2) + '.h5')
@@ -122,8 +110,6 @@ class RenderScenarios:
             scene_cropped_imgs = []
             whole_imgs = []
             img_frames = []
-            scene_cav_ids = []
-            svs_vises = []
             states = []
             tv_lane_ind = None
             number_of_fr = self.seq_len 
@@ -140,7 +126,7 @@ class RenderScenarios:
                     tv_lane_ind
                     )
                 
-                # Being valid is about width of TV being less than 2 pixels
+                # Being valid is about width of TV not being less than 2 pixels
                 if not valid:
                     print('Invalid frame:', fr+1, ' of scenario: ', scenario_idx+1, ' of ', len(self.scenarios))
                     break
@@ -329,8 +315,6 @@ class RenderScenarios:
     
     def update_dirs(self):
         
-        self.dataset_version_dir = 'NOEV'
-        
         self.LC_cropped_imgs_dir = self.LC_cropped_imgs_rdir
         if not os.path.exists(self.LC_cropped_imgs_dir):
             os.makedirs(self.LC_cropped_imgs_dir)
@@ -348,14 +332,6 @@ class RenderScenarios:
             label_dir = os.path.join(self.LC_whole_imgs_dir, str(i))
             if not os.path.exists(label_dir):
                 os.makedirs(label_dir) 
-            
-        self.LC_full_states_dir = self.LC_full_states_rdir
-        if not os.path.exists(self.LC_full_states_dir):
-            os.makedirs(self.LC_full_states_dir)
-
-        self.LC_states_dataset_dir = self.LC_states_dataset_rdir
-        if not os.path.exists(self.LC_states_dataset_dir):
-            os.makedirs(self.LC_states_dataset_dir)
         
         self.LC_image_dataset_dir = self.LC_image_dataset_rdir
         if not os.path.exists(self.LC_image_dataset_dir):

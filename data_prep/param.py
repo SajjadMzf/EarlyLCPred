@@ -1,6 +1,11 @@
 
-DATASET = "HIGHD"
+DATASET = "Processed_highD"
 UNBALANCED = False
+
+dir_ext = ''
+if UNBALANCED:
+    dir_ext += 'U'
+
 
 
 
@@ -18,7 +23,7 @@ image_scaleW = 1
 
 
 
-# parameters of Convolutional Social Pooling Model
+# parameters of CS-LSTM model
 grid_max_x = 100
 
 def generate_paths(first_leg, start_ind, end_ind, second_leg):
@@ -27,7 +32,7 @@ def generate_paths(first_leg, start_ind, end_ind, second_leg):
         path_list.append(first_leg + str(i).zfill(2) + second_leg)
     return path_list
 
-if DATASET == "HIGHD":
+if DATASET == "Processed_highD":
     track_paths = generate_paths('../../Dataset/HighD/Tracks/', 0, 61, '_tracks.csv')
     frame_pickle_paths = generate_paths('../../Dataset/HighD/Pickles/', 0,  61, '_frames.csv')
     track_pickle_paths = generate_paths('../../Dataset/HighD/Pickles/', 0,  61, '_tracks.csv')
