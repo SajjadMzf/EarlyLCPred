@@ -2,11 +2,12 @@ import os
 import time
 from multiprocessing import Process
 import numpy as np 
-
+import sys
 from extract_scenarios import ExtractScenarios
 from render_scenarios import RenderScenarios
 import param as p
 
+np.set_printoptions(threshold=sys.maxsize)
 
 def extract(core_num, file_numbers):
     start = time.time()
@@ -53,10 +54,11 @@ def render(core_num, file_numbers):
 if __name__ =="__main__":
     
     np.random.seed(0)   
-    # Single Core (For Debugging purposes)
     '''
+    # Single Core (For Debugging purposes)
+    
     i = np.array([26])
-    extract(1, i)    
+    #extract(1, i)    
     render(1, i)
     exit()
     '''

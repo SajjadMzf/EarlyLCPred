@@ -5,12 +5,14 @@ import numpy as np
 import h5py
 import matplotlib.pyplot as plt
 class LCDataset(Dataset):
-    def __init__(self, dataset_dir, data_files, data_type, keep_plot_info = True, states_min = 0, states_max = 0):
+    def __init__(self, dataset_dir, data_files, data_type, state_type = '', keep_plot_info = True, states_min = 0, states_max = 0):
         super(LCDataset, self).__init__()
         self.data_files = data_files
         self.dataset_dirs = [os.path.join(dataset_dir, data_file) for data_file in data_files]
         self.file_size = []
         self.dataset_size = 0
+        self.state_data_name = 'state_'+ state_type + '_data'
+        self.data_type= data_type
         if data_type == 'image':
             self.image_only = True
             self.state_only = False
@@ -45,7 +47,8 @@ class LCDataset(Dataset):
             states_min = []
             states_max = []
             with h5py.File(dataset_dir, 'r') as f:
-                state_data = f['state_data']
+                
+                state_data = f[self.state_data_name]
                 #state_data = state_data.reshape((state_data.shape[0]*state_data.shape[1],state_data.shape[2]))
                 states_min.append(np.min(np.min(state_data, axis = 0), axis = 0))
                 states_max.append(np.max(np.max(state_data, axis = 0), axis = 0))
@@ -68,7 +71,8 @@ class LCDataset(Dataset):
         
         with h5py.File(self.dataset_dirs[file_itr], 'r') as f:
             image_data = f['image_data']
-            state_data = f['state_data']
+            if self.data_type == 'state':
+                state_data = f[self.state_data_name]
             
             labels_data = f['labels']
             ttlc_available = f['ttlc_available']

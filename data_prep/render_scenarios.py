@@ -74,7 +74,9 @@ class RenderScenarios:
         frame_data = hf.create_dataset('frame_data', shape = (data_num, self.seq_len), dtype = np.float32)       
         tv_data = hf.create_dataset('tv_data', shape = (data_num,), dtype = np.int)
         labels = hf.create_dataset('labels', shape = (data_num,), dtype = np.float32)
-        state_data = hf.create_dataset('state_data', shape = (data_num, self.seq_len, 18), dtype = np.float32)
+        state_wirth_data = hf.create_dataset('state_wirth_data', shape = (data_num, self.seq_len, 18), dtype = np.float32)
+        state_shou_data = hf.create_dataset('state_shou_data', shape = (data_num, self.seq_len, 18), dtype = np.float32)
+        state_ours_data = hf.create_dataset('state_ours_data', shape = (data_num, self.seq_len, 18), dtype = np.float32)
         ttlc_available = hf.create_dataset('ttlc_available', shape = (data_num,), dtype = np.bool)
         
 
@@ -85,7 +87,9 @@ class RenderScenarios:
             temp = self.scenarios[itr]['images']
             temp = np.transpose(temp,[0,3,1,2])# Chanel first
             image_data[data_itr, :] = temp
-            state_data[data_itr, :] = self.scenarios[itr]['states']
+            state_wirth_data[data_itr, :] = self.scenarios[itr]['states_wirth']
+            state_shou_data[data_itr, :] = self.scenarios[itr]['states_shou']
+            state_ours_data[data_itr, :] = self.scenarios[itr]['states_ours']
             frame_data[data_itr, :] = self.scenarios[itr]['frames']
             tv_data[data_itr] = self.scenarios[itr]['tv']
             labels[data_itr] = self.scenarios[itr]['label']
@@ -110,14 +114,16 @@ class RenderScenarios:
             scene_cropped_imgs = []
             whole_imgs = []
             img_frames = []
-            states = []
+            states_wirth = []
+            states_shou = []
+            states_ours = []
             tv_lane_ind = None
             number_of_fr = self.seq_len 
             for fr in range(number_of_fr):
                 frame = scenario['frames'][fr]
                 
                 svs_ids = scenario['svs']['id'][:,fr]
-                cropped_img, whole_img, valid, state, tv_lane_ind = self.plot_frame(
+                cropped_img, whole_img, valid, state_wirth, state_shou,state_ours, tv_lane_ind = self.plot_frame(
                     self.frames_data[int(frame/self.fr_div -1)],
                     tv_id, 
                     svs_ids,
@@ -130,17 +136,31 @@ class RenderScenarios:
                 if not valid:
                     print('Invalid frame:', fr+1, ' of scenario: ', scenario_idx+1, ' of ', len(self.scenarios))
                     break
+                #plt.figure()
+                #print(np.mean(whole_img.astype(np.float), axis =2).shape)
+                #plt.imshow(np.mean(whole_img.astype(np.float), axis =2), cmap='gray')
+                
+                #plt.figure()
+                #plt.imshow(np.mean(cropped_img.astype(np.float), axis =2), cmap='gray')
+                #plt.show()
+                #print(np.mean(cropped_img.astype(np.float), axis =2))
+                #exit()
                 scene_cropped_imgs.append(cropped_img)
                 whole_imgs.append(whole_img)
                 img_frames.append(frame)
-                states.append(state)
+                states_wirth.append(state_wirth)
+                states_shou.append(state_shou)
+                states_ours.append(state_ours)
                 
             if not valid:
                 continue
             
             scene_cropped_imgs = np.array(scene_cropped_imgs, dtype = self.dtype)
             self.scenarios[scenario_idx]['images'] = scene_cropped_imgs
-            self.scenarios[scenario_idx]['states'] = np.array(states)
+            self.scenarios[scenario_idx]['states_wirth'] = np.array(states_wirth)
+            self.scenarios[scenario_idx]['states_shou'] = np.array(states_shou)
+            self.scenarios[scenario_idx]['states_ours'] = np.array(states_ours)
+            
             saved_data_number += 1
             
             if self.save_whole_imgs: rf.save_image_sequence( tv_id, img_frames, whole_imgs, os.path.join(self.LC_whole_imgs_dir, str(label)), self.file_num)
@@ -222,7 +242,7 @@ class RenderScenarios:
                                     self.lines_width,
                                     self.filled)
         
-        state = np.zeros((18)) # From Wirthmuller 2021
+        
         
         def clamp(n, minn, maxn):
             if n < minn:
@@ -253,19 +273,6 @@ class RenderScenarios:
         rel_acc_x = lambda itr: fix_sign(frame_data[rc.X_ACCELERATION][itr] - frame_data[rc.X_ACCELERATION][tv_itr])
         rel_acc_y =lambda itr: fix_sign(frame_data[rc.Y_ACCELERATION][itr] - frame_data[rc.Y_ACCELERATION][tv_itr])
 
-        
-        #state[0]: existance of left lane
-        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 1) or (tv_lane_ind ==0 and driving_dir==2):
-            state[0] = 0
-        else:
-            state[0] = 1
-        # state[1]: existance of right lane
-        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 2) or (tv_lane_ind ==0 and driving_dir==1):
-            state[1] = 0
-        else:
-            state[1] = 1
-        
-        state[2] = lane_width # lane width
 
         # svs : [pv_id, fv_id, rv_id, rpv_id, rfv_id, lv_id, lpv_id, lfv_id]
         pv_itr = svs_itr[0]
@@ -278,38 +285,147 @@ class RenderScenarios:
         lfv_itr = svs_itr[7]
         
 
-        # long dist to pv
-        state[3] = rel_distance_x(pv_itr) if pv_itr != None else 400 
-        # long dist to rpv
-        state[4] = rel_distance_x(rpv_itr) if rpv_itr != None else 400 
-        # long dist to fv
-        state[5] = rel_distance_x(fv_itr) if fv_itr != None else 400 
-        # lat dist to left marking
-        state[6] = lateral_pos(tv_itr, tv_left_lane_ind)
-         # lat dist to right vehicle
-        state[7] = rel_distance_y(rv_itr) if rv_itr != None else 3*lane_width
-        # lat dist to rfv
-        state[8] =rel_distance_y(rfv_itr) if rfv_itr != None else 3*lane_width
-        # rel long vel pv
-        state[9] = rel_velo_x(pv_itr) if pv_itr != None else 0
-        # rel long vel fv
-        state[10] = rel_velo_x(fv_itr) if fv_itr != None else 0
-        # rel lat vel pv
-        state[11] = rel_velo_y(pv_itr) if pv_itr != None else 0
-        # rel lat vel rpv
-        state[12] = rel_velo_y(rpv_itr) if rpv_itr != None else 0
-        #  rel lat vel lv
-        state[13] = rel_velo_y(lv_itr) if lv_itr != None else 0
-        # rel lat vel rv
-        state[14] = rel_velo_y(rv_itr) if rv_itr != None else 0
-         # long acc of tv
-        state[15] = frame_data[rc.X_ACCELERATION][tv_itr]
-        # rpv rel long acc
-        state[16] = rel_acc_x(rpv_itr) if rpv_itr != None else 0
-        # lat acc of tv
-        state[17] = frame_data[rc.Y_ACCELERATION][tv_itr]
+        ##################### LSTM1, MLP1 #########################        
+        state_wirth = np.zeros((18)) # From Wirthmuller 2021
         
-        return cropped_img, image, valid, state, tv_lane_ind
+        #(1) Existence of left lane, 
+        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 1) or (tv_lane_ind ==0 and driving_dir==2):
+            state_wirth[0] = 0
+        else:
+            state_wirth[0] = 1
+        # (2) Existence of right lane, 
+        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 2) or (tv_lane_ind ==0 and driving_dir==1):
+            state_wirth[1] = 0
+        else:
+            state_wirth[1] = 1
+        # (3) lane width,  
+        state_wirth[2] = lane_width 
+        # (4) Longitudinal distance of TV to PV, 
+        state_wirth[3] = rel_distance_x(pv_itr) if pv_itr != None else 400 
+        # (5)Longitudinal distance of TV to RPV, 
+        state_wirth[4] = rel_distance_x(rpv_itr) if rpv_itr != None else 400  
+        # (6)Longitudinal distance of TV to FV, 
+        state_wirth[5] = rel_distance_x(fv_itr) if fv_itr != None else 400 
+        # (7)lateral distance of TV to the left lane marking, 
+        state_wirth[6] = lateral_pos(tv_itr, tv_left_lane_ind)
+        # (8)lateral distance of TV to RV, 
+        state_wirth[7] = rel_distance_y(rv_itr) if rv_itr != None else 3*lane_width 
+        # (9)lateral distance of TV to RFV, 
+        state_wirth[8] = rel_distance_y(rfv_itr) if rfv_itr != None else 3*lane_width 
+        # (10) relative longitudinal velocity of TV w.r.t. PV,
+        state_wirth[9] = rel_velo_x(pv_itr) if pv_itr != None else 0  
+        # (11) relative longitudinal velocity of TV w.r.t. FV 
+        state_wirth[10] = rel_velo_x(fv_itr) if fv_itr != None else 0
+        # (12)Relative lateral velocity of TV w.r.t. PV, 
+        state_wirth[11] = rel_velo_y(pv_itr) if pv_itr != None else 0
+        # (13)Relative lateral velocity of TV w.r.t. RPV,
+        state_wirth[12] = rel_velo_y(rpv_itr) if rpv_itr != None else 0  
+        # (14)Relative lateral velocity of TV w.r.t. RV, 
+        state_wirth[13] = rel_velo_y(rv_itr) if rv_itr != None else 0
+        # (15)Relative lateral velocity of TV w.r.t. LV, 
+        state_wirth[14] = rel_velo_y(lv_itr) if lv_itr != None else 0
+        # (16) longitudinal acceleration of the TV, 
+        state_wirth[15] = fix_sign(frame_data[rc.X_ACCELERATION][tv_itr])
+        # (17) relative longitudinal acceleration of the TV w.r.t RPV, 
+        state_wirth[16] = rel_acc_x(rpv_itr) if rpv_itr != None else 0
+        # (18) lateral acceleration of the prediction target
+        state_wirth[17] = fix_sign(frame_data[rc.Y_ACCELERATION][tv_itr])
+
+
+
+        ##################### MLP2 ######################### 
+        state_shou = np.zeros((18)) # From Shou 2020
+          
+        #(1) Existence of left lane, 
+        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 1) or (tv_lane_ind ==0 and driving_dir==2):
+            state_shou[0] = 0
+        else:
+            state_shou[0] = 1
+        # (2) Existence of right lane, 
+        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 2) or (tv_lane_ind ==0 and driving_dir==1):
+            state_shou[1] = 0
+        else:
+            state_shou[1] = 1
+        # (3) Longitudinal distance of TV to RPV, 
+        state_shou[2] = rel_distance_x(rpv_itr) if rpv_itr != None else 400 
+        # (4) Longitudinal distance of TV to PV, 
+        state_shou[3] = rel_distance_x(pv_itr) if pv_itr != None else 400 
+        # (5) Longitudinal distance of TV to LPV, 
+        state_shou[4] = rel_distance_x(lpv_itr) if lpv_itr != None else 400 
+        # (6) Longitudinal distance of TV to RV, 
+        state_shou[5] = rel_distance_x(rv_itr) if rv_itr != None else 400 
+        # (7) Longitudinal distance of TV to LV, 
+        state_shou[6] = rel_distance_x(lv_itr) if lv_itr != None else 400 
+        # (8) Longitudinal distance of TV to RFV, 
+        state_shou[7] = rel_distance_x(rfv_itr) if rfv_itr != None else 400 
+        # (9) Longitudinal distance of TV to FV, 
+        state_shou[8] = rel_distance_x(fv_itr) if fv_itr != None else 400 
+        # (10) Longitudinal distance of TV to LFV, 
+        state_shou[9] = rel_distance_x(lfv_itr) if lfv_itr != None else 400 
+        # (11) Relative Velocity of TV w.r.t. RPV, 
+        state_shou[10] = rel_velo_x(rpv_itr) if rpv_itr != None else 0
+        # (12) Relative Velocity of TV w.r.t.  PV, 
+        state_shou[11] = rel_velo_x(pv_itr) if pv_itr != None else 0
+        # (13) Relative Velocity of TV w.r.t.  LPV, 
+        state_shou[12] = rel_velo_x(lpv_itr) if lpv_itr != None else 0
+        # (14) Relative Velocity of TV w.r.t.  RV, 
+        state_shou[13] = rel_velo_x(rv_itr) if rv_itr != None else 0
+        # (15) Relative Velocity of TV w.r.t. LV, 
+        state_shou[14] = rel_velo_x(lv_itr) if lv_itr != None else 0
+        # (16) Relative Velocity of TV w.r.t.  RFV, 
+        state_shou[15] = rel_velo_x(rfv_itr) if rfv_itr != None else 0
+        # (17) Relative Velocity of TV w.r.t.  FV, 
+        state_shou[16] = rel_velo_x(fv_itr) if fv_itr != None else 0
+        # (18) Relative Velocity of TV w.r.t. LFV 
+        state_shou[17] = rel_velo_x(lfv_itr) if lfv_itr != None else 0
+        
+        ##################### LSTM2 #########################
+        state_ours = np.zeros((18)) # a proposed features  
+        # (1) lateral velocity 
+        state_ours[0] = fix_sign(frame_data[rc.Y_VELOCITY][tv_itr])
+        # (2) longitudinal velocity 
+        state_ours[1] = fix_sign(frame_data[rc.X_VELOCITY][tv_itr])
+        # (3) lateral acceleration 
+        state_ours[2] = fix_sign(frame_data[rc.Y_ACCELERATION][tv_itr])
+        # (4) longitudinal acceleration 
+        state_ours[3] = fix_sign(frame_data[rc.X_ACCELERATION][tv_itr])
+        # (5) lateral distance of TV to the left lane marking 
+        state_ours[4] = lateral_pos(tv_itr, tv_left_lane_ind)
+        # (6)Relative longitudinal velocity of the TV w.r.t. PV 
+        state_ours[5] = rel_velo_x(pv_itr) if pv_itr != None else 0
+        # (7) longitudinal distance of TV to PV 
+        state_ours[6] = rel_distance_x(pv_itr) if pv_itr != None else 400 
+        # (8) Relative longitudinal velocity of the TV w.r.t. FV, 
+        state_ours[7] = rel_velo_x(fv_itr) if fv_itr != None else 0
+        # (9) longitudinal distance of TV to FV, 
+        state_ours[8] = rel_distance_x(fv_itr) if fv_itr != None else 400 
+        # (10) longitudinal distance of TV to RPV, 
+        state_ours[9] = rel_distance_x(rpv_itr) if rpv_itr != None else 400 
+        # (11) longitudinal distance of TV to RV, 
+        state_ours[10] = rel_distance_x(rv_itr) if rv_itr != None else 400 
+        # (12) longitudinal distance of TV to RFV, 
+        state_ours[11] = rel_distance_x(rfv_itr) if rfv_itr != None else 400 
+        # (13) longitudinal distance of TV to LPV, 
+        state_ours[12] = rel_distance_x(lpv_itr) if lpv_itr != None else 400 
+        # (14) longitudinal distance of TV to LV, 
+        state_ours[13] = rel_distance_x(lv_itr) if lv_itr != None else 400 
+        # (15) longitudinal distance of TV to LFV, 
+        state_ours[14] = rel_distance_x(lfv_itr) if lfv_itr != None else 400 
+        # (16) Existence of left lane, 
+        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 1) or (tv_lane_ind ==0 and driving_dir==2):
+            state_ours[15] = 0
+        else:
+            state_ours[15] = 1
+        # (17) Existence of right lane, 
+        if (tv_lane_ind+2==len(tv_lane_markings) and driving_dir == 2) or (tv_lane_ind ==0 and driving_dir==1):
+            state_ours[16] = 0
+        else:
+            state_ours[16] = 1
+        
+        # (18) lane width
+        state_ours[17] = lane_width 
+        
+        return cropped_img, image, valid, state_wirth, state_shou, state_ours, tv_lane_ind
         
 
     

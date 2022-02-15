@@ -22,6 +22,7 @@ MODELS = {
         'lc loss function': torch.nn.CrossEntropyLoss,
         'ttlc loss function': torch.nn.MSELoss,
         'data type': 'state',
+        'state type': '',
     },
     'VLSTM': {
         'name': 'VLSTM',
@@ -41,6 +42,7 @@ MODELS = {
         'lc loss function': torch.nn.CrossEntropyLoss,
         'ttlc loss function': torch.nn.MSELoss,
         'data type': 'state',
+        'state type': '',
     },
     'VGRU': {
         'name': 'VGRU',
@@ -60,6 +62,7 @@ MODELS = {
         'lc loss function': torch.nn.CrossEntropyLoss,
         'ttlc loss function': torch.nn.MSELoss,
         'data type': 'state',
+        'state type': '',
     },
     'VCNN':{
         'name': 'VCNN',
@@ -80,6 +83,7 @@ MODELS = {
         'lc loss function': torch.nn.CrossEntropyLoss,
         'ttlc loss function': torch.nn.MSELoss,
         'data type': 'image',
+        'state type': '',
     },
     'REGIONATTCNN3':{
         'name': 'REGIONATTCNN3',
@@ -99,5 +103,6 @@ MODELS = {
         'lc loss function': torch.nn.CrossEntropyLoss,
         'ttlc loss function': torch.nn.MSELoss,
         'data type': 'image',
+        'state type': '',
     },
 }

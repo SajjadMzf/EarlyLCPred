@@ -84,7 +84,9 @@ class ExtractScenarios:
                         'driving_dir':driving_dir,
                         'svs': self.get_svs(tv_data, tv_first_idx, tv_last_idx),
                         'images': None,
-                        'states': None,
+                        'states_wirth': None,
+                        'states_shou': None,
+                        'states_ours': None,
                         }
                 scenarios.append(scenario)
         
@@ -128,7 +130,9 @@ class ExtractScenarios:
                         'driving_dir':driving_dir,
                         'svs': self.get_svs(tv_data, tv_first_idx, tv_last_idx),
                         'images': None,
-                        'states': None,
+                        'states_wirth': None,
+                        'states_shou': None,
+                        'states_ours': None,
                         }
             scenarios.append(scenario)
 

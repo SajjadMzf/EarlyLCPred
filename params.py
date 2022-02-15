@@ -60,8 +60,8 @@ class Parameters:
             self.unblanaced_ext = 'U'
         else:
             self.unblanaced_ext = ''
-        self.TRAIN_DATASET_DIR = '../../Dataset/{}/RenderedDataset/'.format(self.SELECTED_DATASET)
-        self.TEST_DATASET_DIR = '../../Dataset/{}/RenderedDataset{}/'.format(self.SELECTED_DATASET, self.unblanaced_ext)
+        self.TRAIN_DATASET_DIR = '../../Dataset/Processed_highD/RenderedDataset/'
+        self.TEST_DATASET_DIR = '../../Dataset/Processed_highD/RenderedDataset{}/'.format(self.unblanaced_ext)
         
         # CL Params
         self.MAX_PRED_TIME = self.SEQ_LEN-self.IN_SEQ_LEN + 1
@@ -112,7 +112,7 @@ class Parameters:
                 self.VAL_DATA_FILES = [ str(i).zfill(2)+'.h5' for i in self.DATASETS[self._SELECTED_DATASET]['val_ind']]
                 self.TE_DATA_FILES = [ str(i).zfill(2)+'.h5' for i in self.DATASETS[self._SELECTED_DATASET]['te_ind']]
             
-            self.DATASET_DIR = '../../Dataset/{}/RenderedDataset{}/'.format(self._SELECTED_DATASET, self.unblanaced_ext)
+            self.DATASET_DIR = '../../Dataset/Processed_highD/RenderedDataset{}/'.format(self.unblanaced_ext)
         
         
         @property 
@@ -142,7 +142,7 @@ class Parameters:
                 self.unblanaced_ext = 'U'
             else:
                 self.unblanaced_ext = ''
-            self.DATASET_DIR = '../../Dataset/{}/RenderedDataset{}/'.format(self._SELECTED_DATASET, self.unblanaced_ext)
+            self.DATASET_DIR = '../../Dataset/Processed_highD/RenderedDataset{}/'.format(self.unblanaced_ext)
         
         
          

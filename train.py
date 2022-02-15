@@ -51,12 +51,12 @@ def train_model_dict(model_dict, p):
     curriculum_virtual = model_dict['hyperparams']['curriculum virtual']
     curriculum= {'seq':curriculum_seq, 'loss':curriculum_loss, 'virtual': curriculum_virtual}
     # Instantiate Dataset: 
-    tr_dataset = Dataset.LCDataset(p.TRAIN_DATASET_DIR, p.TR_DATA_FILES, data_type = model_dict['data type'], keep_plot_info= False)
+    tr_dataset = Dataset.LCDataset(p.TRAIN_DATASET_DIR, p.TR_DATA_FILES, data_type = model_dict['data type'], state_type = model_dict['state type'], keep_plot_info= False)
     #print(tr_dataset.states_max-tr_dataset.states_min)
     #assert np.all((tr_dataset.states_max-tr_dataset.states_min)>0)
     #exit()
-    val_dataset = Dataset.LCDataset(p.TRAIN_DATASET_DIR, p.VAL_DATA_FILES,  data_type = model_dict['data type'], keep_plot_info= False, states_min = tr_dataset.states_min, states_max = tr_dataset.states_max)
-    te_dataset = Dataset.LCDataset(p.TEST_DATASET_DIR, p.TE_DATA_FILES,  data_type = model_dict['data type'], keep_plot_info= True, states_min = tr_dataset.states_min, states_max = tr_dataset.states_max)
+    val_dataset = Dataset.LCDataset(p.TRAIN_DATASET_DIR, p.VAL_DATA_FILES,  data_type = model_dict['data type'], state_type = model_dict['state type'], keep_plot_info= False, states_min = tr_dataset.states_min, states_max = tr_dataset.states_max)
+    te_dataset = Dataset.LCDataset(p.TEST_DATASET_DIR, p.TE_DATA_FILES,  data_type = model_dict['data type'], state_type = model_dict['state type'], keep_plot_info= True, states_min = tr_dataset.states_min, states_max = tr_dataset.states_max)
     #print(tr_dataset.__len__())
     #print(val_dataset.__len__())
     #print(te_dataset.__len__())
@@ -68,6 +68,7 @@ def train_model_dict(model_dict, p):
     # Save results:
     log_file_dir = p.TABLES_DIR + p.SELECTED_DATASET + '_' + model_dict['name'] + '.csv'  
     log_dict = model_dict['hyperparams'].copy()
+    log_dict['state type'] = model_dict['state type']
     log_dict.update(val_result_dic)
     log_dict.update(te_result_dic)
     log_columns = [key for key in log_dict]

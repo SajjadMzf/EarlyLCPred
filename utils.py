@@ -417,6 +417,7 @@ def plot_att_graphs(p, all_att_coef, prediction_seq, all_labels, all_preds, figu
     att_ax.savefig(plot_dir)
     with open(fig_obs_dir, 'wb') as fid:
         pickle.dump(att_ax, fid)
+    
 
 def calc_roc_n_prc(p, all_lc_preds, all_labels, all_ttlc_preds, prediction_seq, num_samples, figure_name, thr_type, eval_type):
     if thr_type == 'thr':
@@ -747,5 +748,6 @@ def update_tag(model_dict):
         abbr = ''.join([word[0] for word in abbr])
         
         hyperparam_str += abbr + str(model_dict['hyperparams'][hyperparam])
+    hyperparam_str += model_dict['state type']
     
     return model_dict['name'] + hyperparam_str

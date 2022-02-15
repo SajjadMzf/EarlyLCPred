@@ -42,8 +42,14 @@ with PdfPages('cl.pdf') as export_pdf:
 # ROC curve
 with PdfPages('roc_all.pdf') as export_pdf:
     folder_dir = './results/figures/roc'
-    file_names = ['HIGHD_MLPhd512toFalset0clFalsecsFalsecvFalse.pickle','CSLSTM.pickle', 'HIGHD_VLSTMln1toFalsehd512t0clFalsecsFalsecvFalse.pickle', 'HIGHD_REGIONATTCNN3ks3cn16mcTruet2clTruecsTruecvFalse.pickle']
-    names = ['MLP', 'CLSTM', 'LSTM', 'Proposed']
+    file_names = [
+        'HIGHD_REGIONATTCNN3ks3cn16mcTruet2clTruecsTruecvFalse.pickle',
+        'HIGHD_MLPhd512toFalset0clFalsecsFalsecvFalsewirth.pickle',
+        'HIGHD_MLPhd512toFalset0clFalsecsFalsecvFalseshou.pickle',
+        'HIGHD_VLSTMln1toFalsehd512t0clFalsecsFalsecvFalsewirth.pickle', 
+        'HIGHD_VLSTMln1toFalsehd512t0clFalsecsFalsecvFalseours.pickle', 
+        'CSLSTM.pickle']
+    names = ['Proposed','MLP1', 'MLP2','LSTM1','LSTM2','CSLSTM']
     axs = []
     for i, file_name in enumerate(file_names):
         full_dir = os.path.join(folder_dir, file_name)
@@ -89,8 +95,14 @@ with PdfPages('roc_all.pdf') as export_pdf:
 # recall curve
 with PdfPages('recall_all.pdf') as export_pdf:
     folder_dir = './results/figures/recall_vs_TTLC'
-    file_names = ['HIGHD_MLPhd512toFalset0clFalsecsFalsecvFalse.pickle','CSLSTM.pickle', 'HIGHD_VLSTMln1toFalsehd512t0clFalsecsFalsecvFalse.pickle', 'HIGHD_REGIONATTCNN3ks3cn16mcTruet2clTruecsTruecvFalse.pickle']
-    names = ['MLP', 'CSLSTM', 'LSTM', 'Proposed']
+    file_names = [
+        'HIGHD_REGIONATTCNN3ks3cn16mcTruet2clTruecsTruecvFalse.pickle',
+        'HIGHD_MLPhd512toFalset0clFalsecsFalsecvFalsewirth.pickle',
+        'HIGHD_MLPhd512toFalset0clFalsecsFalsecvFalseshou.pickle',
+        'HIGHD_VLSTMln1toFalsehd512t0clFalsecsFalsecvFalsewirth.pickle', 
+        'HIGHD_VLSTMln1toFalsehd512t0clFalsecsFalsecvFalseours.pickle', 
+        'CSLSTM.pickle']
+    names = ['Proposed','MLP1', 'MLP2','LSTM1','LSTM2','CSLSTM']
     axs = []
     for i, file_name in enumerate(file_names):
         full_dir = os.path.join(folder_dir, file_name)
