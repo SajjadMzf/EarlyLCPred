@@ -11,8 +11,191 @@ import logging
 from time import time
 import params
 import utils
+import math
 
 
+
+class TransformerClassifier(nn.Module): 
+    def __init__(self, batch_size, device, hyperparams_dict, parameters, drop_prob = 0.1):
+        super(TransformerClassifier, self).__init__()
+
+        self.batch_size = batch_size
+        self.device = device
+        
+        self.model_dim = hyperparams_dict['model dim']
+        self.ff_dim = hyperparams_dict['feedforward dim']
+        self.mlp_dim = hyperparams_dict['mlp dim']
+        self.layers_num = hyperparams_dict['layer number']
+        self.head_num = hyperparams_dict['head number']
+        self.task = hyperparams_dict['task']
+        self.in_seq_len = parameters.IN_SEQ_LEN
+        self.input_dim = 18
+
+        ##### Positional encoder:
+        pos = torch.arange(0.0, self.in_seq_len).unsqueeze(1)
+        pos_encoding = torch.zeros((self.in_seq_len, self.model_dim))
+
+        sin_den = 10000 ** (torch.arange(0.0, self.model_dim, 2)/self.model_dim) # sin for even item of position's dimension
+        cos_den = 10000 ** (torch.arange(1.0, self.model_dim, 2)/self.model_dim) # cos for odd 
+
+        pos_encoding[:, 0::2] = torch.sin(pos / sin_den) 
+        pos_encoding[:, 1::2] = torch.cos(pos / cos_den)
+
+        # Shape (pos_embedding) --> [max len, d_model]
+        # Adding one more dimension in-between
+        pos_encoding = pos_encoding.unsqueeze(0)
+        # Shape (pos_embedding) --> [1, max len, d_model]
+
+        self.dropout = nn.Dropout(drop_prob)
+        self.register_buffer('pos_encoding', pos_encoding)
+        ######
+
+        # Only using Encoder of Transformer model
+        encoder_layers = nn.TransformerEncoderLayer(self.model_dim, self.head_num, self.ff_dim, drop_prob, batch_first = True)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, self.layers_num)
+        self.embedding_layer = nn.Linear(self.input_dim, self.model_dim)
+        if self.task == params.CLASSIFICATION or self.task == params.DUAL:
+            self.fc1 = nn.Linear(self.model_dim, self.mlp_dim)
+            self.fc2 = nn.Linear(self.mlp_dim,3)
+        
+        if self.task == params.REGRESSION or self.task == params.DUAL:
+            self.fc1_ttlc = nn.Linear(self.model_dim, 512)
+            self.fc2_ttlc = nn.Linear(512,1)
+
+    def ttlc_forward(self, x):
+        x = self.dropout(x)
+        out = F.relu(self.fc1_ttlc(x))
+        out = self.dropout(out)
+        out = F.relu(self.fc2_ttlc(out))
+        return out
+    
+    def lc_forward(self, x):
+        x = self.dropout(x)
+        out = F.relu(self.fc1(x))
+        out = self.dropout(out)
+        out = self.fc2(out)
+        return out
+    
+    def forward(self, x):#TODO make embedding works for sequence data
+        x = x[0]
+        #x = x.reshape(self.batch_size*self.in_seq_len, self.input_dim)
+        x_list = []
+        for i in range(self.in_seq_len):
+            #print(i)
+            x_temp = self.embedding_layer(x[:,i,:])
+            x_temp = torch.unsqueeze(x_temp, 1)
+            x_list.append(x_temp)
+        x = torch.cat(x_list, dim = 1)
+        #print(x.shape)
+        #exit()
+        #x = self.embedding_layer(x)
+        #x = x.reshape(self.batch_size, self.in_seq_len, self.model_dim)
+        
+        x = self.dropout(x + self.pos_encoding)
+        
+        out = self.transformer_encoder(x)
+        transformer_out = out.mean(dim = 1)
+
+        if self.task == params.CLASSIFICATION or self.task == params.DUAL:
+            lc_pred = self.lc_forward(transformer_out)
+        else:
+            lc_pred = 0
+        
+        if self.task == params.REGRESSION or self.task == params.DUAL:
+            ttlc_pred = self.ttlc_forward(transformer_out)
+        else:
+            ttlc_pred = 0
+        
+        return {'lc_pred':lc_pred, 'ttlc_pred':ttlc_pred, 'features': transformer_out}
+
+
+class VanillaLSTM(nn.Module):
+
+    def __init__(self, batch_size, device, hyperparams_dict, parameters, drop_prob = 0.5):
+        super(VanillaLSTM, self).__init__()
+        
+        self.batch_size = batch_size
+        self.device = device
+        
+        self.hidden_dim = hyperparams_dict['hidden dim']
+        self.num_layers = hyperparams_dict['layer number']
+        self.only_tv = hyperparams_dict['tv only']
+        self.task = hyperparams_dict['task']
+
+        self.in_seq_len = parameters.IN_SEQ_LEN
+        # Initial Convs
+        if self.only_tv:
+            self.input_dim = 2
+        else:
+            self.input_dim = 18
+
+        self.lstm = nn.LSTM(self.input_dim, self.hidden_dim, self.num_layers, batch_first = True, dropout= drop_prob)
+        self.dropout = nn.Dropout(drop_prob)
+        # Define the output layer
+        
+        if self.task == params.CLASSIFICATION or self.task == params.DUAL:
+            self.fc1 = nn.Linear(self.hidden_dim, 128)
+            self.fc2 = nn.Linear(128,3)
+        
+        if self.task == params.REGRESSION or self.task == params.DUAL:
+            self.fc1_ttlc = nn.Linear(self.hidden_dim, 512)
+            self.fc2_ttlc = nn.Linear(512,1)
+        
+        
+
+    def init_hidden(self):
+        # This is what we'll initialise our hidden state as
+        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_dim),
+                torch.zeros(self.num_layers, self.batch_size, self.hidden_dim))
+
+    def lstm_forward(self, x_in):
+        # Forward pass through LSTM layer
+        # shape of lstm_out: [batch_size, seq_len, hidden_dim]
+        # shape of self.hidden: (a, b), where a and b both 
+        # have shape (num_layers, batch_size, hidden_dim).
+        x_in = x_in[0]
+        if self.only_tv:
+            x_in = x_in[:,:,:2]
+        x = x_in.view(self.batch_size, self.in_seq_len, self.input_dim)
+        lstm_out, self.hidden = self.lstm(x)
+        
+        # Only take the output from the final timetep
+        # Can pass on the entirety of lstm_out to the next layer if it is a seq2seq prediction
+        lstm_out = lstm_out.transpose(0,1)
+        out = self.dropout(lstm_out[-1].view(self.batch_size, -1))
+        return out
+    
+    def ttlc_forward(self, x):
+        x = self.dropout(x)
+        out = F.relu(self.fc1_ttlc(x))
+        out = self.dropout(out)
+        out = F.relu(self.fc2_ttlc(out))
+        return out
+    
+    def lc_forward(self, x):
+        x = self.dropout(x)
+        out = F.relu(self.fc1(x))
+        out = self.dropout(out)
+        out = self.fc2(out)
+        return out
+
+    def forward(self,x_in):
+        lstm_out = self.lstm_forward(x_in)
+        
+        if self.task == params.CLASSIFICATION or self.task == params.DUAL:
+            lc_pred = self.lc_forward(lstm_out)
+        else:
+            lc_pred = 0
+        
+        if self.task == params.REGRESSION or self.task == params.DUAL:
+            ttlc_pred = self.ttlc_forward(lstm_out)
+        else:
+            ttlc_pred = 0
+        
+        return {'lc_pred':lc_pred, 'ttlc_pred':ttlc_pred, 'features': lstm_out}
+
+
+# Previous methods
 class MLP(nn.Module):
 
     def __init__(self, batch_size, device, hyperparams_dict, parameters, drop_prob = 0.5):

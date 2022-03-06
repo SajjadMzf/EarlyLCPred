@@ -85,7 +85,7 @@ if __name__ == '__main__':
     
     
 
-    p = params.Parameters(SELECTED_MODEL = 'VLSTM', SELECTED_DATASET = 'HIGHD', UNBALANCED = False, ABLATION = False)
+    p = params.Parameters(SELECTED_MODEL = 'TRANSFORMER_CLASSIFIER', SELECTED_DATASET = 'HIGHD', UNBALANCED = False, ABLATION = False)
 
     #1
     model_dict = m.MODELS[p.SELECTED_MODEL]
@@ -94,85 +94,13 @@ if __name__ == '__main__':
     model_dict['hyperparams']['curriculum loss'] = False
     model_dict['hyperparams']['curriculum seq'] = False
     model_dict['hyperparams']['curriculum virtual'] = False
-
+    model_dict['state type'] = 'wirth'
     model_dict['tag'] = utils.update_tag(model_dict)
 
     train_model_dict(model_dict, p)
     
     exit()
 
-    p = params.Parameters(SELECTED_MODEL = 'REGIONATTCNN3', SELECTED_DATASET = 'HIGHD', UNBALANCED = False, ABLATION = False)
-    #1
-    model_dict = m.MODELS[p.SELECTED_MODEL]
-
-    model_dict['hyperparams']['task'] = params.DUAL
-    model_dict['hyperparams']['curriculum loss'] = True
-    model_dict['hyperparams']['curriculum seq'] = True
-    model_dict['hyperparams']['curriculum virtual'] = False
-
-    model_dict['tag'] = utils.update_tag(model_dict)
-
-    train_model_dict(model_dict, p)
-   
-    
-    model_dict['hyperparams']['task'] = params.REGRESSION
-    model_dict['hyperparams']['curriculum loss'] = False
-    model_dict['hyperparams']['curriculum seq'] = True
-    model_dict['hyperparams']['curriculum virtual'] = False
-
-    model_dict['tag'] = utils.update_tag(model_dict)
-
-    train_model_dict(model_dict, p)
-
-    model_dict['hyperparams']['task'] = params.CLASSIFICATION
-    model_dict['hyperparams']['curriculum loss'] = True
-    model_dict['hyperparams']['curriculum seq'] = True
-    model_dict['hyperparams']['curriculum virtual'] = False
-
-    model_dict['tag'] = utils.update_tag(model_dict)
-
-    train_model_dict(model_dict, p)
-
-    p = params.Parameters(SELECTED_MODEL = 'VLSTM', SELECTED_DATASET = 'HIGHD', UNBALANCED = False, ABLATION = False)
-
-    #1
-    model_dict = m.MODELS[p.SELECTED_MODEL]
-
-    model_dict['hyperparams']['task'] = params.REGRESSION
-    model_dict['hyperparams']['curriculum loss'] = False
-    model_dict['hyperparams']['curriculum seq'] = False
-    model_dict['hyperparams']['curriculum virtual'] = False
-
-    model_dict['tag'] = utils.update_tag(model_dict)
-
-    train_model_dict(model_dict, p)
-
-    p = params.Parameters(SELECTED_MODEL = 'VLSTM', SELECTED_DATASET = 'HIGHD', UNBALANCED = False, ABLATION = False)
-
-    #1
-    model_dict = m.MODELS[p.SELECTED_MODEL]
-
-    model_dict['hyperparams']['task'] = params.CLASSIFICATION
-    model_dict['hyperparams']['curriculum loss'] = False
-    model_dict['hyperparams']['curriculum seq'] = False
-    model_dict['hyperparams']['curriculum virtual'] = False
-
-    model_dict['tag'] = utils.update_tag(model_dict)
-
-    train_model_dict(model_dict, p)
-
-    p = params.Parameters(SELECTED_MODEL = 'MLP', SELECTED_DATASET = 'HIGHD', UNBALANCED = False, ABLATION = False)
-     #1
-    model_dict = m.MODELS[p.SELECTED_MODEL]
-
-    model_dict['hyperparams']['task'] = params.CLASSIFICATION
-    model_dict['hyperparams']['curriculum loss'] = False
-    model_dict['hyperparams']['curriculum seq'] = False
-    model_dict['hyperparams']['curriculum virtual'] = False
-
-    model_dict['tag'] = utils.update_tag(model_dict)
-
-    train_model_dict(model_dict, p)
    
     
    

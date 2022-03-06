@@ -180,14 +180,14 @@ def train_model(p, model, optimizer, scheduler, train_loader, lc_loss_func, ttlc
         
             
             avg_loss += loss.data/(len(train_loader))
-        if (batch_idx+1) % 100 == 0:
-            print('Epoch: ',epoch, ' Batch: ', batch_idx+1, ' Training Loss: ', avg_loss.cpu().numpy())
-            avg_loss = 0
+        #if (batch_idx+1) % 100 == 0:
+        #    print('Epoch: ',epoch, ' Batch: ', batch_idx+1, ' Training Loss: ', avg_loss.cpu().numpy())
+        #    avg_loss = 0
         end = time()
         model_time += end-start
     all_end = time()
     all_time = all_end - all_start
-    print('model time: ', model_time, 'all training time: ', all_time)
+    print('model time: ', model_time, 'all training time: ', all_time, 'average training loss', avg_loss)
     scheduler.step()
     all_preds = np.zeros(((num_batch*model.batch_size), p.SEQ_LEN-p.IN_SEQ_LEN+1, 3))
     all_labels = np.zeros((num_batch*model.batch_size))
@@ -440,9 +440,9 @@ def calc_roc_n_prc(p, all_lc_preds, all_labels, all_ttlc_preds, prediction_seq, 
     else:
         raise('Unknown thr type')
 
-    recall_vs_thr = np.flip(recall_vs_thr)
-    fpr_vs_thr = np.flip(fpr_vs_thr)
-    precision_vs_thr = np.flip(precision_vs_thr)
+    recall_vs_thr = np.flip(recall_vs_thr, axis = 0)
+    fpr_vs_thr = np.flip(fpr_vs_thr, axis = 0)
+    precision_vs_thr = np.flip(precision_vs_thr, axis = 0)
 
     if eval_type == 'Test':
         # Creating dirs

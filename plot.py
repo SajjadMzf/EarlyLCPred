@@ -11,19 +11,13 @@ p = params.Parameters(SELECTED_MODEL = 'VLSTM', SELECTED_DATASET = 'HIGHD', UNBA
 prediction_seq = p.SEQ_LEN - p.IN_SEQ_LEN + 1
 matplotlib.rc('font', **font)
 
-
-
-
 # CL figure
 with PdfPages('cl.pdf') as export_pdf:
     fig = plt.figure()
     ax_all = fig.add_subplot(1, 1, 1)
 
-
-
     ax_all.scatter(np.arange(p.CL_EPOCH+1),((p.END_SEQ_CL - p.START_SEQ_CL)/p.FPS)[:p.CL_EPOCH+1] , label = 'Max included TTLC',  marker ='o', linewidth = 10)
     ax_all.scatter(np.arange(p.CL_EPOCH+1), p.LOSS_RATIO_CL[:p.CL_EPOCH+1], label = 'MTL Loss ratio ($\gamma$)',  marker = '*' , linewidth = 10)
-
 
     # And a corresponding grid
     ax_all.grid(True)
@@ -36,9 +30,6 @@ with PdfPages('cl.pdf') as export_pdf:
     ax_all.legend(loc = 'lower right')
     export_pdf.savefig()
     
-
-
-
 # ROC curve
 with PdfPages('roc_all.pdf') as export_pdf:
     folder_dir = './results/figures/roc'
